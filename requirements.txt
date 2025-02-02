@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+alembic
+psycopg2-binary
+pydantic
+jinja2
+python-jose
+passlib
+python-multipart
+bcrypt==3.2.0
