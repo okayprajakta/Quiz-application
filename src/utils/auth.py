@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-SECRET_KEY = "your_secret_key"
+SECRET_KEY = "ab528800e13b7fbb3da8553bdb9d8a6708fb92d51fd0772e82aebd0a7f163b26"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

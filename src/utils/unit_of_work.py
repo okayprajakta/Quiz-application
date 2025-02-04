@@ -9,6 +9,15 @@ class UnitOfWork:
         self.quiz_repository = QuizRepository(db)
         self.user_repository = UserRepository(db)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is None:
+            self.commit()
+        else:
+            self.rollback()
+
     def commit(self):
         self.db.commit()
 

@@ -26,7 +26,7 @@ class Quiz(Base):
     title = Column(String, index=True)
     subject = Column(String, index=True)
     genre = Column(String, index=True)
-    questions = relationship("Question", back_populates="quiz")
+    questions = relationship("Question", back_populates="quiz", cascade="all, delete-orphan")
 
 class Question(Base):
     __tablename__ = "questions"
@@ -34,7 +34,7 @@ class Question(Base):
     quiz_id = Column(Integer, ForeignKey("quizzes.id"))
     question_text = Column(String)
     image_url = Column(String, nullable=True)
-    choices = relationship("Choice", back_populates="question")
+    choices = relationship("Choice", back_populates="question", cascade="all, delete-orphan")
     quiz = relationship("Quiz", back_populates="questions")
 
 class Choice(Base):
