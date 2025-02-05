@@ -44,3 +44,10 @@ def login_for_access_token(form_data: schemas.UserCreate, db: Session = Depends(
             data={"sub": user.username}, expires_delta=access_token_expires
         )
         return {"access_token": access_token, "token_type": "bearer"}
+
+@router.get("/leaderboard", response_model=schemas.LeaderboardResponse)
+def get_leaderboard(limit: int = 10, db: Session = Depends(database.get_db)):
+    with UnitOfWork(db) as uow:
+        top_scorers = uow.user_repository.get_top_scorers(limit)
+        leaderboard_entries = [schemas.LeaderboardEntry(username=user.username, score=user.score) for user in top_scorers]
+        return schemas.LeaderboardResponse(top_scorers=leaderboard_entries)

@@ -23,22 +23,21 @@ class ChoiceResponse(BaseModel):
 
 class GenreEnum(str, Enum):
     science = "Science"
-    math = "Math"
-    history = "History"
     technology="Technology"
 
 class SubjectEnum(str, Enum):
     physics = "Physics"
     chemistry = "Chemistry"
-    algebra = "Algebra"
-    geometry = "Geometry"
-    world_history = "World History"
+    biology = "Biology"
     Programming= "Programming"
 
 class TitleEnum(str, Enum):
     Python="Python-Basic Level"
     Java ="Java-Basic Level"
     C = "C-Basic Level"
+    Physics= "Physics-Basic Level"
+    Chemistry = "Chemistry-Basic Level"
+    Biology = "Biology-Basic Level"
 
 class QuestionResponse(BaseModel):
     id: int
@@ -78,9 +77,11 @@ class QuestionBase(BaseModel):
 class QuestionCreate(QuestionBase):
     choices: List[ChoiceCreate]
 
-class Question(QuestionBase):
+class Question(BaseModel):
     id: int
     quiz_id: int
+    question_text: str
+    image_url: Optional[str] = None
     choices: List[Choice]
 
     class Config:
@@ -101,6 +102,16 @@ class Quiz(QuizBase):
     class Config:
         from_attributes = True
 
+class ChoiceUpdate(BaseModel):
+    id: int
+    choice_text: str
+    is_correct: bool
+
+class QuestionUpdate(BaseModel):
+    question_text: str
+    image_url: Optional[str] = None
+    choices: List[ChoiceUpdate]
+
 class UserBase(BaseModel):
     username: str
     email: str
@@ -116,3 +127,10 @@ class User(UserBase):
 
     class Config:
         from_attributes = True
+
+class LeaderboardEntry(BaseModel):
+    username: str
+    score: int
+
+class LeaderboardResponse(BaseModel):
+    top_scorers: List[LeaderboardEntry]

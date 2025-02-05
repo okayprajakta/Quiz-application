@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from .. import models, schemas
 import random
+from typing import List
 
 class QuizRepository:
     def __init__(self, db: Session):
@@ -105,3 +106,28 @@ class QuizRepository:
             feedback=feedback
         )
 
+    def update_question_and_choices(self, question_id: int, question_update: schemas.QuestionUpdate):
+        db_question = self.db.query(models.Question).filter(models.Question.id == question_id).first()
+        if not db_question:
+            return None
+
+        db_question.question_text = question_update.question_text
+        db_question.image_url = question_update.image_url
+
+        for choice_update in question_update.choices:
+            db_choice = self.db.query(models.Choice).filter(models.Choice.id == choice_update.id).first()
+            if db_choice:
+                db_choice.choice_text = choice_update.choice_text
+                db_choice.is_correct = choice_update.is_correct
+
+        self.db.commit()
+        return db_question
+
+    def delete_questions(self, question_ids: List[int]):
+        db_questions = self.db.query(models.Question).filter(models.Question.id.in_(question_ids)).all()
+        if not db_questions:
+            return None
+        for question in db_questions:
+            self.db.delete(question)
+        self.db.commit()
+        return db_questions

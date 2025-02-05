@@ -6,10 +6,7 @@ from ..database import get_db
 from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
-SECRET_KEY = "ab528800e13b7fbb3da8553bdb9d8a6708fb92d51fd0772e82aebd0a7f163b26"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
@@ -52,7 +49,7 @@ def get_current_user(db: Session = Depends(get_db), credentials: HTTPAuthorizati
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
-            raise credentials_exception
+            credentials_exception
     except JWTError:
         raise credentials_exception
     user = get_user(db, username=username)

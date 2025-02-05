@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..utils.auth import get_password_hash
+from typing import List
 
 class UserRepository:
     def __init__(self, db: Session):
@@ -20,3 +21,6 @@ class UserRepository:
     
     def get_user_by_username(self, username: str):
         return self.db.query(models.User).filter(models.User.username == username).first()
+    
+    def get_top_scorers(self, limit: int = 10) -> List[schemas.User]:
+        return self.db.query(models.User).order_by(models.User.score.desc()).limit(limit).all()

@@ -2,13 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from .. import schemas, database, models
 from ..utils.unit_of_work import UnitOfWork
+from ..utils.auth import get_current_user
 from .user_router import admin_required
 from typing import List
 import random
 
 router = APIRouter()
 
-@router.get("/genres-subjects", response_model=List[schemas.GenreSubjectResponse])
+@router.get("/genres-subjects", response_model=List[schemas.GenreSubjectResponse], dependencies=[Depends(get_current_user)])
 def get_genres_and_subjects(db: Session = Depends(database.get_db)):
     genres = db.query(models.Quiz.genre).distinct().all()
     if not genres:
@@ -24,7 +25,7 @@ def get_genres_and_subjects(db: Session = Depends(database.get_db)):
 
     return genre_subjects
 
-@router.get("/random-questions", response_model=List[schemas.QuestionResponse])
+@router.get("/random-questions", response_model=List[schemas.QuestionResponse], dependencies=[Depends(get_current_user)])
 def get_random_questions(
     genre: schemas.GenreEnum,
     subject: schemas.SubjectEnum,
@@ -49,7 +50,7 @@ def get_random_questions(
     
     return question_responses
 
-@router.post("/submit-quiz", response_model=schemas.SubmissionResponse)
+@router.post("/submit-quiz", response_model=schemas.SubmissionResponse, dependencies=[Depends(get_current_user)])
 def submit_quiz(submission: schemas.QuizSubmission, db: Session = Depends(database.get_db)):
     with UnitOfWork(db) as uow:
         response = uow.quiz_repository.submit_quiz(submission)
@@ -62,4 +63,21 @@ def create_quiz(quiz: schemas.QuizCreate, db: Session = Depends(database.get_db)
         db_quiz = uow.quiz_repository.create_quiz(quiz)
         uow.commit()
         return db_quiz
+    
+@router.patch("/questions/{question_id}", response_model=schemas.Question, dependencies=[Depends(admin_required)])
+def update_question_and_choices(question_id: int, question_update: schemas.QuestionUpdate, db: Session = Depends(database.get_db)):
+    with UnitOfWork(db) as uow:
+        db_question = uow.quiz_repository.update_question_and_choices(question_id, question_update)
+        if not db_question:
+            raise HTTPException(status_code=404, detail="Question not found")
+        uow.commit()
+        return db_question
 
+@router.delete("/questions/bulk-delete", status_code=status.HTTP_200_OK, dependencies=[Depends(admin_required)])
+def delete_questions(question_ids: List[int], db: Session = Depends(database.get_db)):
+    with UnitOfWork(db) as uow:
+        db_questions = uow.quiz_repository.delete_questions(question_ids)
+        if not db_questions:
+            raise HTTPException(status_code=404, detail="Questions not found")
+        uow.commit()
+    return {"detail": "Questions successfully deleted"}
