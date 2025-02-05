@@ -54,11 +54,20 @@ class QuizRepository:
                     self.db.add(db_choice)
             return db_quiz
 
-    def get_quiz(self, quiz_id: int):
-        return self.db.query(models.Quiz).filter(models.Quiz.id == quiz_id).first()
+    def get_genres_and_subjects(self):
+        genres = self.db.query(models.Quiz.genre).distinct().all()
+        if not genres:
+            return []
 
-    def get_all_quizzes(self):
-        return self.db.query(models.Quiz).all()
+        genre_subjects = []
+        for genre in genres:
+            subjects = self.db.query(models.Quiz.subject).filter(models.Quiz.genre == genre[0]).distinct().all()
+            genre_subjects.append(schemas.GenreSubjectResponse(
+                genre=genre[0],
+                subjects=[subject[0] for subject in subjects]
+            ))
+
+        return genre_subjects
 
     def get_random_questions_by_genre_subject_title(self, genre: str, subject: str, title: str, num_questions: int):
         questions = self.db.query(models.Question).join(models.Quiz).filter(

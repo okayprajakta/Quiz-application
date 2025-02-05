@@ -11,19 +11,9 @@ router = APIRouter()
 
 @router.get("/genres-subjects", response_model=List[schemas.GenreSubjectResponse], dependencies=[Depends(get_current_user)])
 def get_genres_and_subjects(db: Session = Depends(database.get_db)):
-    genres = db.query(models.Quiz.genre).distinct().all()
-    if not genres:
-        return []
-
-    genre_subjects = []
-    for genre in genres:
-        subjects = db.query(models.Quiz.subject).filter(models.Quiz.genre == genre[0]).distinct().all()
-        genre_subjects.append(schemas.GenreSubjectResponse(
-            genre=genre[0],
-            subjects=[subject[0] for subject in subjects]
-        ))
-
-    return genre_subjects
+    with UnitOfWork(db) as uow:
+        genre_subjects = uow.quiz_repository.get_genres_and_subjects()
+        return genre_subjects
 
 @router.get("/random-questions", response_model=List[schemas.QuestionResponse], dependencies=[Depends(get_current_user)])
 def get_random_questions(
