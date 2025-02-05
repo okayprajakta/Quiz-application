@@ -1,4 +1,3 @@
-# src/models.py
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Enum as SQLAlchemyEnum
 from sqlalchemy.orm import relationship
 import enum

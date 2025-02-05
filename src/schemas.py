@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional
+from enum import Enum
 
 class ChoiceBase(BaseModel):
     choice_text: str
@@ -19,6 +20,25 @@ class ChoiceResponse(BaseModel):
     id: int
     question_id: int
     choice_text: str
+
+class GenreEnum(str, Enum):
+    science = "Science"
+    math = "Math"
+    history = "History"
+    technology="Technology"
+
+class SubjectEnum(str, Enum):
+    physics = "Physics"
+    chemistry = "Chemistry"
+    algebra = "Algebra"
+    geometry = "Geometry"
+    world_history = "World History"
+    Programming= "Programming"
+
+class TitleEnum(str, Enum):
+    Python="Python-Basic Level"
+    Java ="Java-Basic Level"
+    C = "C-Basic Level"
 
 class QuestionResponse(BaseModel):
     id: int
@@ -46,7 +66,11 @@ class SubmissionResponse(BaseModel):
     total_questions: int
     percentage: float
     feedback: List[Feedback]
-    
+
+class GenreSubjectResponse(BaseModel):
+    genre: str
+    subjects: List[str]
+
 class QuestionBase(BaseModel):
     question_text: str
     image_url: Optional[str] = None
@@ -69,12 +93,6 @@ class QuizBase(BaseModel):
 
 class QuizCreate(QuizBase):
     questions: List[QuestionCreate]
-
-class QuizUpdate(BaseModel):
-    title: Optional[str] = None
-    subject: Optional[str] = None
-    genre: Optional[str] = None
-    questions: Optional[List[QuestionCreate]] = None
 
 class Quiz(QuizBase):
     id: int

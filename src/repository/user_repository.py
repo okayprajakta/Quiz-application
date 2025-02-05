@@ -1,4 +1,3 @@
-# src/repository/user_repository.py
 from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..utils.auth import get_password_hash

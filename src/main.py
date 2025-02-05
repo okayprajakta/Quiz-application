@@ -1,4 +1,3 @@
-#src/main.py
 from fastapi import FastAPI
 from .routers import user_router, quiz_router, leaderboard_router
 from .database import engine
