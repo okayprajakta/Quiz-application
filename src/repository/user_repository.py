@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from .. import models, schemas
-from ..utils.auth import get_password_hash
+from src import models, schemas
+from src.utils.auth import get_password_hash
 from typing import List
 
 class UserRepository:
@@ -9,8 +9,16 @@ class UserRepository:
 
     def create_user(self, user: schemas.UserCreate):
         hashed_password = get_password_hash(user.password)
-        db_user = models.User(username=user.username, email=user.email, hashed_password=hashed_password)
+        db_user = models.User(
+            username=user.username,
+            email=user.email,
+            hashed_password=hashed_password,
+            is_active=True,  
+            score=0,       
+            role=models.Role.USER  
+        )
         self.db.add(db_user)
+        self.db.flush()  
         return db_user
 
     def get_user(self, user_id: int):

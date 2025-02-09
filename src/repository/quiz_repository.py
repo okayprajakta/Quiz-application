@@ -7,7 +7,7 @@ class QuizRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_quiz(self, quiz: schemas.QuizCreate): 
+    def create_quiz(self, quiz: schemas.QuizCreate):
         existing_quiz = self.db.query(models.Quiz).filter(
             models.Quiz.genre == quiz.genre,
             models.Quiz.subject == quiz.subject,
@@ -24,7 +24,7 @@ class QuizRepository:
                         image_url=question.image_url
                     )
                     self.db.add(db_question)
-                    self.db.flush()  
+                    self.db.flush()
                     for choice in question.choices:
                         db_choice = models.Choice(
                             question_id=db_question.id,
@@ -36,7 +36,7 @@ class QuizRepository:
         else:
             db_quiz = models.Quiz(title=quiz.title, subject=quiz.subject, genre=quiz.genre)
             self.db.add(db_quiz)
-            self.db.flush()  
+            self.db.flush()
             for question in quiz.questions:
                 db_question = models.Question(
                     quiz_id=db_quiz.id,
@@ -44,7 +44,7 @@ class QuizRepository:
                     image_url=question.image_url
                 )
                 self.db.add(db_question)
-                self.db.flush()  
+                self.db.flush()
                 for choice in question.choices:
                     db_choice = models.Choice(
                         question_id=db_question.id,
