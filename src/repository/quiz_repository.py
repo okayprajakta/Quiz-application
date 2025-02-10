@@ -1,4 +1,3 @@
-#src\repository\quiz_repository.py
 from sqlalchemy.orm import Session
 from .. import models, schemas
 import random

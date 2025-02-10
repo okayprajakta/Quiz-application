@@ -1,6 +1,5 @@
-#src\service\user_service.py
 from sqlalchemy.orm import Session
-from .. import models, schemas
+from .. import schemas
 from ..repository.user_repository import UserRepository
 from ..utils.unit_of_work import UnitOfWork
 from typing import List
