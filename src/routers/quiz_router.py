@@ -1,54 +1,62 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+# src/routers/quiz_router.py
+from fastapi import APIRouter, Depends, Request, Form
 from sqlalchemy.orm import Session
+from fastapi.responses import HTMLResponse
 from .. import schemas, database
 from ..service.quiz_service import QuizService
 from ..utils.auth import get_current_user
-from .user_router import admin_required
+from fastapi.templating import Jinja2Templates
 from typing import List
 
 router = APIRouter()
+templates = Jinja2Templates(directory="src/templates")
 
-@router.get("/genres-subjects", response_model=List[schemas.GenreSubjectResponse], dependencies=[Depends(get_current_user)])
-def get_genres_and_subjects(db: Session = Depends(database.get_db)):
+@router.get("/genres-subjects", response_class=HTMLResponse, dependencies=[Depends(get_current_user)])
+async def get_genres_and_subjects(request: Request, db: Session = Depends(database.get_db)):
     quiz_service = QuizService(db)
-    return quiz_service.get_genres_and_subjects()
+    genres_subjects = quiz_service.get_genres_and_subjects()
+    return templates.TemplateResponse("genres_subjects.html", {"request": request, "genres_subjects": genres_subjects})
 
-@router.get("/random-questions", response_model=List[schemas.QuestionResponse], dependencies=[Depends(get_current_user)])
-def get_random_questions(
-    genre: schemas.GenreEnum,
-    subject: schemas.SubjectEnum,
-    title: schemas.TitleEnum,
-    num_questions: int,
-    db: Session = Depends(database.get_db)
-):
+@router.get("/quiz-list/{genre}/{subject}", response_class=HTMLResponse, name="quiz_list", dependencies=[Depends(get_current_user)])
+async def quiz_list(request: Request, genre: str, subject: str, db: Session = Depends(database.get_db)):
     quiz_service = QuizService(db)
-    questions = quiz_service.get_random_questions_by_genre_subject_title(genre, subject, title, num_questions)
-    if not questions:
-        raise HTTPException(status_code=404, detail="No questions found for the specified genre, subject, and title")
-    return questions
+    quizzes = quiz_service.get_quizzes_by_genre_subject(genre, subject)
+    return templates.TemplateResponse("quiz_list.html", {"request": request, "genre": genre, "subject": subject, "quizzes": quizzes})
 
-@router.post("/submit-quiz", response_model=schemas.SubmissionResponse, dependencies=[Depends(get_current_user)])
-def submit_quiz(submission: schemas.QuizSubmission, db: Session = Depends(database.get_db)):
+@router.get("/quiz-detail/{quiz_id}", response_class=HTMLResponse, dependencies=[Depends(get_current_user)])
+async def quiz_detail(request: Request, quiz_id: int, db: Session = Depends(database.get_db)):
     quiz_service = QuizService(db)
-    return quiz_service.submit_quiz(submission)
+    quiz = quiz_service.get_quiz_by_id(quiz_id)
+    return templates.TemplateResponse("quiz_detail.html", {"request": request, "quiz": quiz})
 
-@router.post("/quizzes", response_model=schemas.Quiz, dependencies=[Depends(admin_required)])
-def create_quiz(quiz: schemas.QuizCreate, db: Session = Depends(database.get_db)):
+@router.post("/submit-quiz", response_class=HTMLResponse, dependencies=[Depends(get_current_user)])
+async def submit_quiz(request: Request, submission: schemas.QuizSubmission = Depends(), db: Session = Depends(database.get_db)):
     quiz_service = QuizService(db)
-    return quiz_service.create_quiz(quiz)
-    
-@router.patch("/questions/{question_id}", response_model=schemas.Question, dependencies=[Depends(admin_required)])
-def update_question_and_choices(question_id: int, question_update: schemas.QuestionUpdate, db: Session = Depends(database.get_db)):
+    result = quiz_service.submit_quiz(submission)
+    return templates.TemplateResponse("submission_result.html", {"request": request, "result": result})
+
+@router.get("/update-question/{question_id}", response_class=HTMLResponse, dependencies=[Depends(get_current_user)])
+async def update_question(request: Request, question_id: int, db: Session = Depends(database.get_db)):
+    quiz_service = QuizService(db)
+    question = quiz_service.get_question_by_id(question_id)
+    return templates.TemplateResponse("update_question.html", {"request": request, "question": question})
+
+@router.post("/update-question/{question_id}", response_class=HTMLResponse, dependencies=[Depends(get_current_user)])
+async def update_question_and_choices(request: Request, question_id: int, db: Session = Depends(database.get_db),
+                                      question_text: str = Form(...), image_url: str = Form(...), choices: List[schemas.ChoiceUpdate] = Depends()):
+    question_update = schemas.QuestionUpdate(question_text=question_text, image_url=image_url, choices=choices)
     quiz_service = QuizService(db)
     db_question = quiz_service.update_question_and_choices(question_id, question_update)
-    if not db_question:
-        raise HTTPException(status_code=404, detail="Question not found")
-    return db_question
+    return templates.TemplateResponse("update_question.html", {"request": request, "question": db_question})
 
-@router.delete("/questions/bulk-delete", status_code=status.HTTP_200_OK, dependencies=[Depends(admin_required)])
-def delete_questions(question_ids: List[int], db: Session = Depends(database.get_db)):
+@router.get("/delete-questions", response_class=HTMLResponse, dependencies=[Depends(get_current_user)])
+async def delete_questions_form(request: Request, db: Session = Depends(database.get_db)):
+    quiz_service = QuizService(db)
+    questions = quiz_service.get_all_questions()
+    return templates.TemplateResponse("delete_questions.html", {"request": request, "questions": questions})
+
+@router.post("/delete-questions", response_class=HTMLResponse, dependencies=[Depends(get_current_user)])
+async def delete_questions(request: Request, question_ids: List[int] = Form(...), db: Session = Depends(database.get_db)):
     quiz_service = QuizService(db)
     db_questions = quiz_service.delete_questions(question_ids)
-    if not db_questions:
-        raise HTTPException(status_code=404, detail="Questions not found")
-    return {"detail": "Questions successfully deleted"}
+    return templates.TemplateResponse("delete_questions.html", {"request": request, "questions": db_questions})

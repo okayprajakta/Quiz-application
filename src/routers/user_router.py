@@ -1,12 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Form
 from sqlalchemy.orm import Session
-from .. import schemas, database 
+from .. import schemas, database
 from ..utils.auth import authenticate_user, get_current_user, create_access_token
 from datetime import timedelta
 from ..service.user_service import UserService
 from ..models import Role
+from fastapi.templating import Jinja2Templates
+from starlette.responses import HTMLResponse
 
 router = APIRouter()
+templates = Jinja2Templates(directory="src/templates")
 
 def admin_required(current_user: schemas.User = Depends(get_current_user)):
     if current_user.role != Role.ADMIN:
@@ -16,22 +19,31 @@ def admin_required(current_user: schemas.User = Depends(get_current_user)):
         )
     return current_user
 
-@router.post("/signup", response_model=schemas.User)
-def create_user(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
+@router.get("/register", response_class=HTMLResponse, name="register_form")
+async def register_form(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
+
+@router.post("/signup", response_class=HTMLResponse, name="create_user")
+async def register_user(request: Request, username: str = Form(...), email: str = Form(...), password: str = Form(...), db: Session = Depends(database.get_db)):
     user_service = UserService(db)
-    db_user = user_service.get_user_by_email(user.email)
+    db_user = user_service.get_user_by_email(email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    db_user = user_service.get_user_by_username(user.username)
+    db_user = user_service.get_user_by_username(username)
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
+    user = schemas.UserCreate(username=username, email=email, password=password)
     new_user = user_service.create_user(user)
-    return new_user
+    return templates.TemplateResponse("register_success.html", {"request": request, "user": new_user})
 
-@router.post("/login")
-def login_for_access_token(form_data: schemas.UserCreate, db: Session = Depends(database.get_db)):
+@router.get("/login", response_class=HTMLResponse, name="login_form")
+async def login_form(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@router.post("/login", response_class=HTMLResponse, name="login_for_access_token")
+async def login_user(request: Request, username: str = Form(...), password: str = Form(...), db: Session = Depends(database.get_db)):
     user_service = UserService(db)
-    user = authenticate_user(db, form_data.username, form_data.password)
+    user = authenticate_user(db, username, password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -42,11 +54,11 @@ def login_for_access_token(form_data: schemas.UserCreate, db: Session = Depends(
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return templates.TemplateResponse("login_success.html", {"request": request, "access_token": access_token})
 
-@router.get("/leaderboard", response_model=schemas.LeaderboardResponse)
-def get_leaderboard(limit: int = 10, db: Session = Depends(database.get_db)):
+@router.get("/leaderboard", response_class=HTMLResponse, name="leaderboard")
+async def get_leaderboard(request: Request, limit: int = 10, db: Session = Depends(database.get_db)):
     user_service = UserService(db)
     top_scorers = user_service.get_top_scorers(limit)
     leaderboard_entries = [schemas.LeaderboardEntry(username=user.username, score=user.score) for user in top_scorers]
-    return schemas.LeaderboardResponse(top_scorers=leaderboard_entries)
+    return templates.TemplateResponse("leaderboard.html", {"request": request, "leaderboard": leaderboard_entries})

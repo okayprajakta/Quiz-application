@@ -1,3 +1,4 @@
+# src/repository/quiz_repository.py
 from sqlalchemy.orm import Session
 from .. import models, schemas
 import random
@@ -68,6 +69,15 @@ class QuizRepository:
             ))
 
         return genre_subjects
+
+    def get_quizzes_by_genre_subject(self, genre: str, subject: str):
+        return self.db.query(models.Quiz).filter(
+            models.Quiz.genre == genre,
+            models.Quiz.subject == subject
+        ).all()
+
+    def get_quiz_by_id(self, quiz_id: int):
+        return self.db.query(models.Quiz).filter(models.Quiz.id == quiz_id).first()
 
     def get_random_questions_by_genre_subject_title(self, genre: str, subject: str, title: str, num_questions: int):
         questions = self.db.query(models.Question).join(models.Quiz).filter(
@@ -140,3 +150,6 @@ class QuizRepository:
             self.db.delete(question)
         self.db.commit()
         return db_questions
+
+    def get_all_questions(self):
+        return self.db.query(models.Question).all()
