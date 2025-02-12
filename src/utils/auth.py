@@ -1,5 +1,6 @@
 # src/auth.py
 from passlib.context import CryptContext
+from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from ..models import User
@@ -50,10 +51,14 @@ def get_current_user(db: Session = Depends(get_db), credentials: HTTPAuthorizati
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
-            credentials_exception
+            raise credentials_exception
     except JWTError:
         raise credentials_exception
     user = get_user(db, username=username)
     if user is None:
         raise credentials_exception
     return user
+
+def admin_required(current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not enough permissions")

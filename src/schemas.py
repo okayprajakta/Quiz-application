@@ -12,7 +12,6 @@ class ChoiceCreate(ChoiceBase):
 class Choice(ChoiceBase):
     id: int
     question_id: int
-
     class Config:
         from_attributes = True
 
@@ -21,23 +20,10 @@ class ChoiceResponse(BaseModel):
     question_id: int
     choice_text: str
 
-class GenreEnum(str, Enum):
-    science = "Science"
-    technology="Technology"
-
-class SubjectEnum(str, Enum):
-    physics = "Physics"
-    chemistry = "Chemistry"
-    biology = "Biology"
-    Programming= "Programming"
-
-class TitleEnum(str, Enum):
-    Python="Python-Basic Level"
-    Java ="Java-Basic Level"
-    C = "C-Basic Level"
-    Physics= "Physics-Basic Level"
-    Chemistry = "Chemistry-Basic Level"
-    Biology = "Biology-Basic Level"
+class DifficultyEnum(str, Enum):
+    easy = "Easy"
+    medium = "Medium"
+    hard = "Hard"
 
 class QuestionResponse(BaseModel):
     id: int
@@ -83,14 +69,15 @@ class Question(BaseModel):
     question_text: str
     image_url: Optional[str] = None
     choices: List[Choice]
-
     class Config:
         from_attributes = True
 
 class QuizBase(BaseModel):
     title: str
     subject: str
-    genre: str 
+    genre: str
+    difficulty: DifficultyEnum
+    duration: Optional[int] = None
 
 class QuizCreate(QuizBase):
     questions: List[QuestionCreate]
@@ -98,7 +85,6 @@ class QuizCreate(QuizBase):
 class Quiz(QuizBase):
     id: int
     questions: List[Question]
-
     class Config:
         from_attributes = True
 
@@ -119,14 +105,29 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
-class User(UserBase):
+class User(BaseModel):
     id: int
+    username: str
+    email: str
     is_active: bool
     score: int
     role: str
-
     class Config:
         from_attributes = True
+
+class QuizAttemptResponse(BaseModel):
+    id: int
+    quiz_id: int
+    score: int
+    timestamp: str
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    is_active: bool
+    score: int
+    attempts: List[QuizAttemptResponse]
 
 class LeaderboardEntry(BaseModel):
     username: str
