@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from .. import models, schemas
+from .. import schemas
 from ..repository.quiz_repository import QuizRepository
 from ..utils.unit_of_work import UnitOfWork
 from typing import List
