@@ -8,8 +8,8 @@ from typing import List
 
 router = APIRouter()
 
-@router.get("/genres-subjects", response_model=List[schemas.GenreSubjectResponse], dependencies=[Depends(get_current_user)])
-def get_genres_and_subjects(db: Session = Depends(database.get_db)):
+@router.get("/available-quizzes", response_model=List[schemas.GenreSubjectResponse], dependencies=[Depends(get_current_user)])
+def get_available_quizzes(db: Session = Depends(database.get_db)):
     quiz_service = QuizService(db)
     return quiz_service.get_genres_and_subjects()
 

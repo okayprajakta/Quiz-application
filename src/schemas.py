@@ -66,10 +66,14 @@ class SubmissionResponse(BaseModel):
     percentage: float
     feedback: List[Feedback]
 
+class SubjectTitleResponse(BaseModel):
+    subject: str
+    titles: List[str]
+
 class GenreSubjectResponse(BaseModel):
     genre: str
-    subjects: List[str]
-
+    subjects: List[SubjectTitleResponse]
+    
 class QuestionBase(BaseModel):
     question_text: str
     image_url: Optional[str] = None

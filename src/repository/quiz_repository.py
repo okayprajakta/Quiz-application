@@ -62,9 +62,23 @@ class QuizRepository:
         genre_subjects = []
         for genre in genres:
             subjects = self.db.query(models.Quiz.subject).filter(models.Quiz.genre == genre[0]).distinct().all()
+            subject_list = []
+
+            for subject in subjects:
+                quizzes = (
+                    self.db.query(models.Quiz.title)
+                    .filter(models.Quiz.genre == genre[0], models.Quiz.subject == subject[0])
+                    .all()
+                )
+
+                subject_list.append(schemas.SubjectTitleResponse(
+                    subject=subject[0],
+                    titles=[quiz[0] for quiz in quizzes]  
+                ))
+
             genre_subjects.append(schemas.GenreSubjectResponse(
                 genre=genre[0],
-                subjects=[subject[0] for subject in subjects]
+                subjects=subject_list
             ))
 
         return genre_subjects
